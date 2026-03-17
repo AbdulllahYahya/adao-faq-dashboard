@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
-  Sparkles, Library,
+  Sparkles, Library, Youtube,
   ChevronsLeft, ChevronsRight, X, Sun, Moon,
 } from 'lucide-react';
 import { useTheme } from 'next-themes';
@@ -12,6 +12,7 @@ import { useTheme } from 'next-themes';
 const navigation = [
   { name: 'Generate', href: '/', icon: Sparkles },
   { name: 'FAQ Library', href: '/faqs', icon: Library },
+  { name: 'YouTube Quotes', href: '/youtube-quotes', icon: Youtube },
 ];
 
 interface SidebarProps {

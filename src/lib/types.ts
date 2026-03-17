@@ -51,3 +51,16 @@ export interface GenerateResponse {
   document_id: string;
   document_title: string;
 }
+
+export interface YouTubeQuote {
+  quote: string;
+  timestamp: string;
+  context: string;
+  selected: boolean;
+}
+
+export interface YouTubeQuoteResult {
+  videoTitle: string;
+  videoUrl: string;
+  quotes: YouTubeQuote[];
+}
