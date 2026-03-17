@@ -5,17 +5,14 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import {
-  LayoutDashboard, Upload, FileText, HelpCircle, Settings,
+  LayoutDashboard, HelpCircle,
   ChevronsLeft, ChevronsRight, X, Sun, Moon,
 } from 'lucide-react';
 import { useTheme } from 'next-themes';
 
 const navigation = [
   { name: 'Overview', href: '/', icon: LayoutDashboard },
-  { name: 'Upload', href: '/upload', icon: Upload },
-  { name: 'Documents', href: '/documents', icon: FileText },
   { name: 'FAQs', href: '/faqs', icon: HelpCircle },
-  { name: 'Settings', href: '/settings', icon: Settings },
 ];
 
 interface SidebarProps {
