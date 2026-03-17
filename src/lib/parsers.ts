@@ -1,11 +1,11 @@
-import * as pdfParse from 'pdf-parse';
 import * as mammoth from 'mammoth';
 import * as Papa from 'papaparse';
 
 export async function parsePDF(buffer: Buffer): Promise<string> {
-  // pdf-parse has inconsistent exports, handle both default and named
-  const parse = typeof (pdfParse as any).default === 'function' ? (pdfParse as any).default : pdfParse;
-  const data = await parse(buffer);
+  // Import from lib directly to avoid pdf-parse's index.js test file loader
+  const pdfParse = await import('pdf-parse/lib/pdf-parse.js');
+  const parse = pdfParse.default || pdfParse;
+  const data = await (parse as (buf: Buffer) => Promise<{ text: string }>)(buffer);
   return data.text;
 }
 
