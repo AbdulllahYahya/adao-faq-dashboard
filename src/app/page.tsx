@@ -36,7 +36,7 @@ export default function Home() {
     try {
       const res = await fetch('/api/faqs?status=all');
       if (res.ok) {
-        const data = await res.json();
+        const data = await res.json().catch(() => []);
         const allFaqs = Array.isArray(data) ? data : [];
         const documentIds = new Set(allFaqs.map((f: { document_id: string }) => f.document_id).filter(Boolean));
         setStats({

@@ -135,7 +135,7 @@
 }
 
 [data-theme="light"] .gradient-text {
-  background: linear-gradient(135deg, #146A96 0%, #1A80B6 100%);
+  background: linear-gradient(135deg, #3a56e0 0%, #5271FF 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -302,7 +302,7 @@ body {
 
 /* === GRADIENT TEXT === */
 .gradient-text {
-  background: linear-gradient(135deg, #1A80B6 0%, #5AB8E0 100%);
+  background: linear-gradient(135deg, #5271FF 0%, #93A8FF 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;

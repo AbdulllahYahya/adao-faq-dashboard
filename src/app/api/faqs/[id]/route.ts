@@ -1,11 +1,17 @@
 import { NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { supabase, isSupabaseConfigured } from '@/lib/supabase';
+
+const DB_NOT_CONFIGURED = NextResponse.json(
+  { error: 'Database is not configured. Please set up Supabase credentials in .env.local' },
+  { status: 503 }
+);
 
 export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    if (!isSupabaseConfigured()) return DB_NOT_CONFIGURED;
     const { id } = await params;
     const body = await request.json();
 
@@ -48,6 +54,7 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    if (!isSupabaseConfigured()) return DB_NOT_CONFIGURED;
     const { id } = await params;
 
     const { error } = await supabase

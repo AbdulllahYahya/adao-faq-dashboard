@@ -26,9 +26,12 @@ export function FAQList() {
       if (search) params.set('search', search);
 
       const res = await fetch(`/api/faqs?${params.toString()}`);
-      if (!res.ok) throw new Error('Failed to fetch');
+      if (!res.ok) {
+        const errData = await res.json().catch(() => null);
+        throw new Error(errData?.error || 'Failed to fetch');
+      }
       const data = await res.json();
-      setFaqs(data);
+      setFaqs(Array.isArray(data) ? data : []);
     } catch {
       toast.error('Failed to load FAQs');
     } finally {

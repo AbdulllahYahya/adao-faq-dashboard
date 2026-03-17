@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { parseFile } from '@/lib/parsers';
 import { generateFAQs } from '@/lib/openai';
-import { supabase } from '@/lib/supabase';
+import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 
 export async function POST(request: Request) {
   try {
@@ -50,7 +50,22 @@ export async function POST(request: Request) {
     // Determine document title
     const docTitle = title || fileName || 'Pasted text';
 
-    // Save document metadata to Supabase
+    const faqsResponse = result.faqs.map((faq) => ({
+      ...faq,
+      category: result.category,
+      selected: true,
+    }));
+
+    // Save document metadata to Supabase (skip if not configured)
+    if (!isSupabaseConfigured()) {
+      return NextResponse.json({
+        faqs: faqsResponse,
+        document_id: null,
+        document_title: docTitle,
+        category: result.category,
+      });
+    }
+
     const { data: doc, error: docError } = await supabase
       .from('documents')
       .insert({
@@ -65,13 +80,8 @@ export async function POST(request: Request) {
 
     if (docError) {
       console.error('Supabase document insert error:', docError);
-      // Still return FAQs even if document save fails
       return NextResponse.json({
-        faqs: result.faqs.map((faq) => ({
-          ...faq,
-          category: result.category,
-          selected: true,
-        })),
+        faqs: faqsResponse,
         document_id: null,
         document_title: docTitle,
         category: result.category,
@@ -79,11 +89,7 @@ export async function POST(request: Request) {
     }
 
     return NextResponse.json({
-      faqs: result.faqs.map((faq) => ({
-        ...faq,
-        category: result.category,
-        selected: true,
-      })),
+      faqs: faqsResponse,
       document_id: doc.id,
       document_title: docTitle,
       category: result.category,
