@@ -25,6 +25,50 @@ function formatTimestamp(seconds: number): string {
   return `${m}:${String(s).padStart(2, '0')}`;
 }
 
+interface TranscriptSegment {
+  text: string;
+  offset: number;
+  duration: number;
+}
+
+async function fetchTranscriptRapidAPI(videoId: string): Promise<TranscriptSegment[]> {
+  const rapidApiKey = process.env.RAPIDAPI_KEY;
+  if (!rapidApiKey) throw new Error('RapidAPI key not configured');
+
+  const res = await fetch(
+    `https://youtube-transcript3.p.rapidapi.com/api/transcript?videoId=${videoId}`,
+    {
+      headers: {
+        'Content-Type': 'application/json',
+        'x-rapidapi-host': 'youtube-transcript3.p.rapidapi.com',
+        'x-rapidapi-key': rapidApiKey,
+      },
+    }
+  );
+
+  if (!res.ok) throw new Error(`RapidAPI returned ${res.status}`);
+
+  const data = await res.json();
+  if (!data.success || !Array.isArray(data.transcript)) {
+    throw new Error('No transcript returned from RapidAPI');
+  }
+
+  return data.transcript.map((t: any) => ({
+    text: t.text,
+    offset: t.offset * 1000, // RapidAPI returns seconds, normalize to ms
+    duration: t.duration * 1000,
+  }));
+}
+
+async function fetchTranscriptFree(videoId: string): Promise<TranscriptSegment[]> {
+  const result = await YoutubeTranscript.fetchTranscript(videoId);
+  return result.map((t) => ({
+    text: t.text,
+    offset: t.offset,
+    duration: t.duration,
+  }));
+}
+
 export async function POST(request: Request) {
   try {
     const apiKey = process.env.OPENAI_API_KEY;
@@ -44,15 +88,19 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Invalid YouTube URL' }, { status: 400 });
     }
 
-    // Fetch transcript
-    let transcript: { text: string; offset: number; duration: number }[];
+    // Fetch transcript — try RapidAPI first, fall back to free package
+    let transcript: TranscriptSegment[];
     try {
-      transcript = await YoutubeTranscript.fetchTranscript(videoId);
+      transcript = await fetchTranscriptRapidAPI(videoId);
     } catch {
-      return NextResponse.json(
-        { error: 'Could not fetch transcript. Make sure the video has captions/subtitles enabled.' },
-        { status: 400 }
-      );
+      try {
+        transcript = await fetchTranscriptFree(videoId);
+      } catch {
+        return NextResponse.json(
+          { error: 'Could not fetch transcript. Make sure the video has captions/subtitles enabled.' },
+          { status: 400 }
+        );
+      }
     }
 
     if (!transcript || transcript.length === 0) {
