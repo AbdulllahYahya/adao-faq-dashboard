@@ -1,11 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Layout } from '@/components/Layout';
 import { UploadZone } from '@/components/UploadZone';
 import { TextPasteArea } from '@/components/TextPasteArea';
 import { FAQGeneratorPanel } from '@/components/FAQGeneratorPanel';
-import { FileText, HelpCircle, Clock, CheckCircle, Upload, Type, Loader2 } from 'lucide-react';
+import { Sparkles, Upload, Type, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import type { GeneratedFAQ } from '@/lib/types';
 
@@ -24,32 +24,6 @@ export default function Home() {
   const [faqs, setFaqs] = useState<GeneratedFAQ[]>([]);
   const [category, setCategory] = useState('');
   const [documentId, setDocumentId] = useState<string | null>(null);
-
-  // Stats
-  const [stats, setStats] = useState({ documents: 0, faqs: 0, draft: 0, published: 0 });
-
-  useEffect(() => {
-    fetchStats();
-  }, []);
-
-  async function fetchStats() {
-    try {
-      const res = await fetch('/api/faqs?status=all');
-      if (res.ok) {
-        const data = await res.json().catch(() => []);
-        const allFaqs = Array.isArray(data) ? data : [];
-        const documentIds = new Set(allFaqs.map((f: { document_id: string }) => f.document_id).filter(Boolean));
-        setStats({
-          documents: documentIds.size,
-          faqs: allFaqs.length,
-          draft: allFaqs.filter((f: { status: string }) => f.status === 'draft').length,
-          published: allFaqs.filter((f: { status: string }) => f.status === 'published').length,
-        });
-      }
-    } catch {
-      // Stats are non-critical
-    }
-  }
 
   async function handleGenerate() {
     const hasContent = tab === 'file' ? file : text.trim().length >= 50;
@@ -121,8 +95,7 @@ export default function Home() {
       }
 
       setState('saved');
-      toast.success(`Saved ${selectedFaqs.length} FAQs to database`);
-      fetchStats();
+      toast.success(`Saved ${selectedFaqs.length} FAQs`);
 
       // Reset after a moment
       setTimeout(() => {
@@ -141,47 +114,16 @@ export default function Home() {
     }
   }
 
-  const statCards = [
-    { title: 'Documents', value: stats.documents, icon: FileText, color: 'var(--accent)' },
-    { title: 'Total FAQs', value: stats.faqs, icon: HelpCircle, color: 'var(--accent-secondary)' },
-    { title: 'Draft', value: stats.draft, icon: Clock, color: 'var(--amber)' },
-    { title: 'Published', value: stats.published, icon: CheckCircle, color: 'var(--green)' },
-  ];
-
   return (
     <Layout>
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>
-          FAQ Generator
+          Generate FAQs
         </h1>
         <p className="text-sm mt-1" style={{ color: 'var(--text-tertiary)' }}>
           Upload a document or paste text to generate FAQs with AI
         </p>
-      </div>
-
-      {/* Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        {statCards.map((stat) => (
-          <div key={stat.title} className="card-primary p-5 hover-lift">
-            <div className="relative z-10 flex items-center justify-between">
-              <div>
-                <p className="text-[11px] font-medium uppercase tracking-wide" style={{ color: 'var(--text-tertiary)' }}>
-                  {stat.title}
-                </p>
-                <p className="text-2xl font-bold mt-1" style={{ color: 'var(--text-primary)' }}>
-                  {stat.value}
-                </p>
-              </div>
-              <div
-                className="w-10 h-10 rounded-xl flex items-center justify-center"
-                style={{ background: `color-mix(in srgb, ${stat.color} 12%, transparent)` }}
-              >
-                <stat.icon className="w-5 h-5" style={{ color: stat.color }} />
-              </div>
-            </div>
-          </div>
-        ))}
       </div>
 
       {/* Input Section */}
@@ -257,8 +199,7 @@ export default function Home() {
             <button
               onClick={handleGenerate}
               disabled={state === 'processing'}
-              className="mt-5 flex items-center justify-center gap-2 w-full sm:w-auto px-6 py-2.5 rounded-xl text-sm font-medium transition-all disabled:opacity-50 hover-lift"
-              style={{ background: 'var(--accent)', color: '#fff' }}
+              className="btn-primary mt-5 flex items-center justify-center gap-2 w-full sm:w-auto px-6 py-2.5 rounded-xl text-sm"
             >
               {state === 'processing' ? (
                 <>
@@ -267,7 +208,7 @@ export default function Home() {
                 </>
               ) : (
                 <>
-                  <HelpCircle className="w-4 h-4" />
+                  <Sparkles className="w-4 h-4" />
                   Generate FAQs
                 </>
               )}
@@ -302,7 +243,7 @@ export default function Home() {
       {state === 'saved' && (
         <div className="card-secondary p-4 mt-4 text-center">
           <p className="text-sm font-medium" style={{ color: 'var(--green)' }}>
-            FAQs saved successfully! Redirecting...
+            FAQs saved successfully!
           </p>
         </div>
       )}

@@ -1,8 +1,24 @@
 'use client';
 
 import { useState } from 'react';
-import { Check, X, Pencil, Trash2 } from 'lucide-react';
+import { Check, X, Pencil, Trash2, ArrowUpCircle, ArrowDownCircle } from 'lucide-react';
 import type { FAQ } from '@/lib/types';
+
+const CATEGORY_COLORS: Record<string, string> = {
+  'Fundamentals': 'var(--cat-fundamentals)',
+  'Exposure Contexts': 'var(--cat-exposure)',
+  'Legal & Compensation': 'var(--cat-legal)',
+  'Events & Advocacy': 'var(--cat-events)',
+  'ADAO Org & Leadership': 'var(--cat-org)',
+  'Regulation & Policy': 'var(--cat-regulation)',
+  'Health Effects': 'var(--cat-health)',
+  'Safety & Abatement': 'var(--cat-safety)',
+  'Medical Management': 'var(--cat-medical)',
+};
+
+function getCategoryColor(name?: string): string {
+  return (name && CATEGORY_COLORS[name]) || 'var(--accent)';
+}
 
 interface FAQCardProps {
   faq: FAQ;
@@ -16,6 +32,8 @@ export function FAQCard({ faq, onUpdate, onDelete }: FAQCardProps) {
   const [answer, setAnswer] = useState(faq.answer);
   const [saving, setSaving] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+
+  const catColor = getCategoryColor(faq.bucket?.name);
 
   const handleSave = async () => {
     setSaving(true);
@@ -49,41 +67,49 @@ export function FAQCard({ faq, onUpdate, onDelete }: FAQCardProps) {
   };
 
   return (
-    <div className="card-tertiary p-4 group">
+    <div
+      className="card-tertiary p-4 group"
+      style={{ borderLeft: `3px solid ${catColor}` }}
+    >
       <div className="flex items-start justify-between gap-3 mb-2">
-        <div className="flex items-center gap-2 flex-1 min-w-0">
+        <div className="flex items-center gap-2 flex-1 min-w-0 flex-wrap">
           {faq.bucket && (
             <span
               className="text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-full flex-shrink-0"
-              style={{ background: 'var(--accent-soft)', color: 'var(--accent-light)' }}
+              style={{ background: `color-mix(in srgb, ${catColor} 12%, transparent)`, color: catColor }}
             >
               {faq.bucket.name}
             </span>
           )}
-          <button
-            onClick={toggleStatus}
-            className="text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-full flex-shrink-0 cursor-pointer transition-colors"
-            style={{
-              background: faq.status === 'published' ? 'var(--green-soft)' : 'var(--amber-soft)',
-              color: faq.status === 'published' ? 'var(--green)' : 'var(--amber)',
-            }}
-          >
-            {faq.status}
-          </button>
         </div>
-        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-          {!editing && (
+        <div className="flex items-center gap-1.5 flex-shrink-0">
+          {!editing && !confirmDelete && (
             <>
               <button
+                onClick={toggleStatus}
+                className="flex items-center gap-1 text-[11px] font-medium px-2.5 py-1 rounded-lg transition-colors"
+                style={{
+                  background: faq.status === 'published' ? 'var(--green-soft)' : 'var(--amber-soft)',
+                  color: faq.status === 'published' ? 'var(--green)' : 'var(--amber)',
+                }}
+                title={faq.status === 'draft' ? 'Click to publish' : 'Click to unpublish'}
+              >
+                {faq.status === 'draft' ? (
+                  <><ArrowUpCircle className="w-3 h-3" /> Publish</>
+                ) : (
+                  <><ArrowDownCircle className="w-3 h-3" /> Published</>
+                )}
+              </button>
+              <button
                 onClick={() => setEditing(true)}
-                className="p-1.5 rounded-lg hover:bg-[var(--bg-hover)] transition-colors"
+                className="p-1.5 rounded-lg hover:bg-[var(--bg-hover)] transition-colors opacity-50 group-hover:opacity-100"
                 style={{ color: 'var(--text-muted)' }}
               >
                 <Pencil className="w-3.5 h-3.5" />
               </button>
               <button
                 onClick={() => setConfirmDelete(true)}
-                className="p-1.5 rounded-lg hover:bg-[var(--red-soft)] transition-colors"
+                className="p-1.5 rounded-lg hover:bg-[var(--red-soft)] transition-colors opacity-50 group-hover:opacity-100"
                 style={{ color: 'var(--text-muted)' }}
               >
                 <Trash2 className="w-3.5 h-3.5" />
@@ -125,11 +151,6 @@ export function FAQCard({ faq, onUpdate, onDelete }: FAQCardProps) {
               onChange={(e) => setQuestion(e.target.value)}
               rows={2}
               className="w-full p-2.5 text-sm rounded-lg border resize-none"
-              style={{
-                background: 'var(--bg-elevated)',
-                borderColor: 'var(--border-strong)',
-                color: 'var(--text-primary)',
-              }}
             />
           </div>
           <div>
@@ -141,19 +162,13 @@ export function FAQCard({ faq, onUpdate, onDelete }: FAQCardProps) {
               onChange={(e) => setAnswer(e.target.value)}
               rows={4}
               className="w-full p-2.5 text-sm rounded-lg border resize-none"
-              style={{
-                background: 'var(--bg-elevated)',
-                borderColor: 'var(--border-strong)',
-                color: 'var(--text-primary)',
-              }}
             />
           </div>
           <div className="flex items-center gap-2">
             <button
               onClick={handleSave}
               disabled={saving}
-              className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg font-medium transition-colors"
-              style={{ background: 'var(--accent)', color: '#fff' }}
+              className="btn-primary flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg"
             >
               <Check className="w-3.5 h-3.5" />
               {saving ? 'Saving...' : 'Save'}

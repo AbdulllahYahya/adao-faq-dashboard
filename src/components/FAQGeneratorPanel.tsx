@@ -80,8 +80,7 @@ export function FAQGeneratorPanel({
             <button
               onClick={onSave}
               disabled={saving || selectedCount === 0}
-              className="flex items-center gap-1.5 text-xs px-4 py-2 rounded-lg font-medium transition-all disabled:opacity-50"
-              style={{ background: 'var(--accent)', color: '#fff' }}
+              className="btn-primary flex items-center gap-1.5 text-xs px-4 py-2 rounded-lg"
             >
               <Save className="w-3.5 h-3.5" />
               {saving ? 'Saving...' : 'Save to Database'}
@@ -182,8 +181,7 @@ function FAQEditItem({
               <div className="flex gap-2">
                 <button
                   onClick={handleSave}
-                  className="flex items-center gap-1 text-xs px-2.5 py-1 rounded-lg"
-                  style={{ background: 'var(--accent)', color: '#fff' }}
+                  className="btn-primary flex items-center gap-1 text-xs px-2.5 py-1 rounded-lg"
                 >
                   <Check className="w-3 h-3" /> Save
                 </button>

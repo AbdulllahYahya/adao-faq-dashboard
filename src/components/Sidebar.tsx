@@ -4,14 +4,14 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
-  LayoutDashboard, HelpCircle,
+  Sparkles, Library,
   ChevronsLeft, ChevronsRight, X, Sun, Moon,
 } from 'lucide-react';
 import { useTheme } from 'next-themes';
 
 const navigation = [
-  { name: 'Overview', href: '/', icon: LayoutDashboard },
-  { name: 'FAQs', href: '/faqs', icon: HelpCircle },
+  { name: 'Generate', href: '/', icon: Sparkles },
+  { name: 'FAQ Library', href: '/faqs', icon: Library },
 ];
 
 interface SidebarProps {

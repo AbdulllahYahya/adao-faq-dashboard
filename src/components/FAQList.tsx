@@ -1,10 +1,11 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { Search, HelpCircle } from 'lucide-react';
+import { Search, HelpCircle, Sparkles, ArrowUpCircle } from 'lucide-react';
 import { FAQCard } from './FAQCard';
-import type { FAQ } from '@/lib/types';
+import type { FAQ, FAQBucket } from '@/lib/types';
 import { toast } from 'sonner';
+import Link from 'next/link';
 
 const STATUS_FILTERS = [
   { label: 'All', value: 'all' },
@@ -12,11 +13,38 @@ const STATUS_FILTERS = [
   { label: 'Published', value: 'published' },
 ];
 
-export function FAQList() {
+const CATEGORY_COLORS: Record<string, string> = {
+  'Fundamentals': 'var(--cat-fundamentals)',
+  'Exposure Contexts': 'var(--cat-exposure)',
+  'Legal & Compensation': 'var(--cat-legal)',
+  'Events & Advocacy': 'var(--cat-events)',
+  'ADAO Org & Leadership': 'var(--cat-org)',
+  'Regulation & Policy': 'var(--cat-regulation)',
+  'Health Effects': 'var(--cat-health)',
+  'Safety & Abatement': 'var(--cat-safety)',
+  'Medical Management': 'var(--cat-medical)',
+};
+
+interface FAQListProps {
+  onStatsChange?: () => void;
+}
+
+export function FAQList({ onStatsChange }: FAQListProps) {
   const [faqs, setFaqs] = useState<FAQ[]>([]);
+  const [buckets, setBuckets] = useState<FAQBucket[]>([]);
   const [loading, setLoading] = useState(true);
   const [status, setStatus] = useState('all');
   const [search, setSearch] = useState('');
+  const [selectedBucket, setSelectedBucket] = useState<string | null>(null);
+  const [publishing, setPublishing] = useState(false);
+
+  // Fetch buckets on mount
+  useEffect(() => {
+    fetch('/api/buckets')
+      .then((res) => res.ok ? res.json() : [])
+      .then((data) => setBuckets(Array.isArray(data) ? data : []))
+      .catch(() => {});
+  }, []);
 
   const fetchFaqs = useCallback(async () => {
     setLoading(true);
@@ -24,6 +52,7 @@ export function FAQList() {
       const params = new URLSearchParams();
       if (status !== 'all') params.set('status', status);
       if (search) params.set('search', search);
+      if (selectedBucket) params.set('bucket_id', selectedBucket);
 
       const res = await fetch(`/api/faqs?${params.toString()}`);
       if (!res.ok) {
@@ -37,7 +66,7 @@ export function FAQList() {
     } finally {
       setLoading(false);
     }
-  }, [status, search]);
+  }, [status, search, selectedBucket]);
 
   useEffect(() => {
     fetchFaqs();
@@ -57,6 +86,7 @@ export function FAQList() {
       const updated = await res.json();
       setFaqs((prev) => prev.map((f) => (f.id === id ? updated : f)));
       toast.success('FAQ updated');
+      onStatsChange?.();
     } catch {
       toast.error('Failed to update FAQ');
     }
@@ -71,10 +101,50 @@ export function FAQList() {
       }
       setFaqs((prev) => prev.filter((f) => f.id !== id));
       toast.success('FAQ deleted');
+      onStatsChange?.();
     } catch {
       toast.error('Failed to delete FAQ');
     }
   };
+
+  const handlePublishAll = async () => {
+    const draftIds = faqs.filter((f) => f.status === 'draft').map((f) => f.id);
+    if (draftIds.length === 0) return;
+
+    setPublishing(true);
+    try {
+      const res = await fetch('/api/faqs', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids: draftIds, status: 'published' }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => null);
+        throw new Error(err?.error || 'Failed to publish');
+      }
+      const updated = await res.json();
+      setFaqs((prev) =>
+        prev.map((f) => {
+          const u = updated.find((u: FAQ) => u.id === f.id);
+          return u || f;
+        })
+      );
+      toast.success(`Published ${draftIds.length} FAQs`);
+      onStatsChange?.();
+    } catch {
+      toast.error('Failed to publish FAQs');
+    } finally {
+      setPublishing(false);
+    }
+  };
+
+  // Count FAQs per bucket (from current filtered set without bucket filter)
+  const bucketCounts = buckets.map((b) => ({
+    ...b,
+    count: faqs.filter((f) => f.bucket_id === b.id).length,
+  }));
+
+  const draftCount = faqs.filter((f) => f.status === 'draft').length;
 
   // Group FAQs by document
   const grouped = faqs.reduce<Record<string, { title: string; faqs: FAQ[] }>>((acc, faq) => {
@@ -85,8 +155,45 @@ export function FAQList() {
     return acc;
   }, {});
 
+  const selectedBucketName = buckets.find((b) => b.id === selectedBucket)?.name;
+
   return (
     <div>
+      {/* Category Tabs */}
+      {buckets.length > 0 && (
+        <div className="category-tabs mb-4">
+          <button
+            onClick={() => setSelectedBucket(null)}
+            className="text-xs px-3.5 py-1.5 rounded-full font-medium transition-all whitespace-nowrap flex-shrink-0"
+            style={{
+              background: !selectedBucket ? 'var(--accent-soft)' : 'var(--bg-surface)',
+              color: !selectedBucket ? 'var(--accent-light)' : 'var(--text-tertiary)',
+              border: `1px solid ${!selectedBucket ? 'var(--border-accent)' : 'var(--border)'}`,
+            }}
+          >
+            All ({faqs.length})
+          </button>
+          {bucketCounts.map((bucket) => {
+            const isActive = selectedBucket === bucket.id;
+            const color = CATEGORY_COLORS[bucket.name] || 'var(--accent)';
+            return (
+              <button
+                key={bucket.id}
+                onClick={() => setSelectedBucket(isActive ? null : bucket.id)}
+                className="text-xs px-3.5 py-1.5 rounded-full font-medium transition-all whitespace-nowrap flex-shrink-0"
+                style={{
+                  background: isActive ? `color-mix(in srgb, ${color} 15%, transparent)` : 'var(--bg-surface)',
+                  color: isActive ? color : 'var(--text-tertiary)',
+                  border: `1px solid ${isActive ? `color-mix(in srgb, ${color} 30%, transparent)` : 'var(--border)'}`,
+                }}
+              >
+                {bucket.name} {bucket.count > 0 && `(${bucket.count})`}
+              </button>
+            );
+          })}
+        </div>
+      )}
+
       {/* Filter Bar */}
       <div className="card-secondary p-4 mb-6">
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
@@ -119,18 +226,25 @@ export function FAQList() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="w-full pl-9 pr-3 py-2 text-xs rounded-lg border"
-              style={{
-                background: 'var(--bg-elevated)',
-                borderColor: 'var(--border)',
-                color: 'var(--text-primary)',
-              }}
             />
           </div>
 
-          {/* Count */}
-          <p className="text-xs flex-shrink-0" style={{ color: 'var(--text-muted)' }}>
-            {faqs.length} FAQ{faqs.length !== 1 ? 's' : ''}
-          </p>
+          {/* Publish All + Count */}
+          <div className="flex items-center gap-2 flex-shrink-0">
+            {draftCount > 0 && (
+              <button
+                onClick={handlePublishAll}
+                disabled={publishing}
+                className="btn-primary flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg"
+              >
+                <ArrowUpCircle className="w-3.5 h-3.5" />
+                {publishing ? 'Publishing...' : `Publish All (${draftCount})`}
+              </button>
+            )}
+            <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
+              {faqs.length} FAQ{faqs.length !== 1 ? 's' : ''}
+            </p>
+          </div>
         </div>
       </div>
 
@@ -143,15 +257,35 @@ export function FAQList() {
         </div>
       ) : faqs.length === 0 ? (
         <div className="card-secondary p-12 flex flex-col items-center justify-center text-center">
-          <HelpCircle className="w-12 h-12 mb-3" style={{ color: 'var(--text-muted)' }} />
+          <div
+            className="w-16 h-16 rounded-2xl flex items-center justify-center mb-4"
+            style={{ background: 'var(--accent-soft)' }}
+          >
+            <HelpCircle className="w-8 h-8" style={{ color: 'var(--accent)' }} />
+          </div>
           <p className="text-sm font-medium mb-1" style={{ color: 'var(--text-primary)' }}>
-            No FAQs found
+            {search
+              ? `No FAQs matching "${search}"`
+              : selectedBucketName
+              ? `No FAQs in ${selectedBucketName}`
+              : 'No FAQs yet'}
           </p>
-          <p className="text-xs" style={{ color: 'var(--text-tertiary)' }}>
+          <p className="text-xs mb-4" style={{ color: 'var(--text-tertiary)' }}>
             {search
               ? 'Try a different search term'
-              : 'Upload a document on the Overview page to generate FAQs'}
+              : selectedBucketName
+              ? 'Try another category or generate new FAQs'
+              : 'Generate your first FAQs from a document or text'}
           </p>
+          {!search && !selectedBucketName && (
+            <Link
+              href="/"
+              className="btn-primary flex items-center gap-2 text-xs px-4 py-2 rounded-lg"
+            >
+              <Sparkles className="w-3.5 h-3.5" />
+              Generate FAQs
+            </Link>
+          )}
         </div>
       ) : (
         <div className="space-y-6">
