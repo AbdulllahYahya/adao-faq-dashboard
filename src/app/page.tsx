@@ -73,8 +73,13 @@ export default function Home() {
       const res = await fetch('/api/generate', { method: 'POST', body: formData });
 
       if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error || 'Generation failed');
+        const err = await res.json().catch(() => null);
+        throw new Error(err?.error || 'Generation failed');
+      }
+
+      const contentType = res.headers.get('content-type') || '';
+      if (!contentType.includes('application/json')) {
+        throw new Error('Server returned an unexpected response. Please try again.');
       }
 
       const data = await res.json();
@@ -111,8 +116,8 @@ export default function Home() {
       });
 
       if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error || 'Save failed');
+        const err = await res.json().catch(() => null);
+        throw new Error(err?.error || 'Save failed');
       }
 
       setState('saved');

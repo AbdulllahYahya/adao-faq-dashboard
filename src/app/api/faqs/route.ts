@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 
+export const runtime = 'nodejs';
+
 export async function GET(request: NextRequest) {
   try {
     if (!isSupabaseConfigured()) {

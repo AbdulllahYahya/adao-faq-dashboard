@@ -3,6 +3,9 @@ import { parseFile } from '@/lib/parsers';
 import { generateFAQs } from '@/lib/openai';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 
+export const runtime = 'nodejs';
+export const maxDuration = 60;
+
 export async function POST(request: Request) {
   try {
     const formData = await request.formData();

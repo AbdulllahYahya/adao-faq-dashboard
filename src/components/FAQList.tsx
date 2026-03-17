@@ -50,7 +50,10 @@ export function FAQList() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updates),
       });
-      if (!res.ok) throw new Error('Failed to update');
+      if (!res.ok) {
+        const err = await res.json().catch(() => null);
+        throw new Error(err?.error || 'Failed to update');
+      }
       const updated = await res.json();
       setFaqs((prev) => prev.map((f) => (f.id === id ? updated : f)));
       toast.success('FAQ updated');
@@ -62,7 +65,10 @@ export function FAQList() {
   const handleDelete = async (id: string) => {
     try {
       const res = await fetch(`/api/faqs/${id}`, { method: 'DELETE' });
-      if (!res.ok) throw new Error('Failed to delete');
+      if (!res.ok) {
+        const err = await res.json().catch(() => null);
+        throw new Error(err?.error || 'Failed to delete');
+      }
       setFaqs((prev) => prev.filter((f) => f.id !== id));
       toast.success('FAQ deleted');
     } catch {

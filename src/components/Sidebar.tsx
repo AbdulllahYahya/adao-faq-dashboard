@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import {
   LayoutDashboard, HelpCircle,
@@ -62,9 +61,8 @@ export function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose }: Side
                 rel="noopener noreferrer"
                 className="flex-shrink-0 hover:opacity-80 transition-opacity"
               >
-                <Image
-                  src="https://www.asbestosdiseaseawareness.org/wp-content/uploads/2015/12/adao-logo200x75.jpg.webp"
-                  unoptimized
+                <img
+                  src="/images/adao-logo.webp"
                   alt="ADAO"
                   width={40}
                   height={40}

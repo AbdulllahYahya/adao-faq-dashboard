@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react';
 import { Sidebar } from './Sidebar';
 import { Toaster } from 'sonner';
 import { Menu, Sun, Moon } from 'lucide-react';
-import Image from 'next/image';
 import { useTheme } from 'next-themes';
 
 interface LayoutProps {
@@ -70,9 +69,8 @@ export function Layout({ children }: LayoutProps) {
             rel="noopener noreferrer"
             className="hover:opacity-80 transition-opacity"
           >
-            <Image
-              src="https://www.asbestosdiseaseawareness.org/wp-content/uploads/2015/12/adao-logo200x75.jpg.webp"
-                unoptimized
+            <img
+              src="/images/adao-logo.webp"
               alt="ADAO"
               width={34}
               height={34}
