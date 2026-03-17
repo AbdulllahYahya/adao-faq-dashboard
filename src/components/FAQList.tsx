@@ -31,20 +31,28 @@ interface FAQListProps {
 
 export function FAQList({ onStatsChange }: FAQListProps) {
   const [faqs, setFaqs] = useState<FAQ[]>([]);
-  const [buckets, setBuckets] = useState<FAQBucket[]>([]);
+  const [buckets, setBuckets] = useState<(FAQBucket & { faq_count: number })[]>([]);
+  const [totalCount, setTotalCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [status, setStatus] = useState('all');
   const [search, setSearch] = useState('');
   const [selectedBucket, setSelectedBucket] = useState<string | null>(null);
   const [publishing, setPublishing] = useState(false);
 
-  // Fetch buckets on mount
-  useEffect(() => {
+  // Fetch buckets with counts on mount
+  const fetchBuckets = useCallback(() => {
     fetch('/api/buckets')
-      .then((res) => res.ok ? res.json() : [])
-      .then((data) => setBuckets(Array.isArray(data) ? data : []))
+      .then((res) => res.ok ? res.json() : { buckets: [], totalCount: 0 })
+      .then((data) => {
+        setBuckets(Array.isArray(data.buckets) ? data.buckets : []);
+        setTotalCount(data.totalCount || 0);
+      })
       .catch(() => {});
   }, []);
+
+  useEffect(() => {
+    fetchBuckets();
+  }, [fetchBuckets]);
 
   const fetchFaqs = useCallback(async () => {
     setLoading(true);
@@ -87,6 +95,7 @@ export function FAQList({ onStatsChange }: FAQListProps) {
       setFaqs((prev) => prev.map((f) => (f.id === id ? updated : f)));
       toast.success('FAQ updated');
       onStatsChange?.();
+      fetchBuckets();
     } catch {
       toast.error('Failed to update FAQ');
     }
@@ -102,6 +111,7 @@ export function FAQList({ onStatsChange }: FAQListProps) {
       setFaqs((prev) => prev.filter((f) => f.id !== id));
       toast.success('FAQ deleted');
       onStatsChange?.();
+      fetchBuckets();
     } catch {
       toast.error('Failed to delete FAQ');
     }
@@ -131,18 +141,13 @@ export function FAQList({ onStatsChange }: FAQListProps) {
       );
       toast.success(`Published ${draftIds.length} FAQs`);
       onStatsChange?.();
+      fetchBuckets();
     } catch {
       toast.error('Failed to publish FAQs');
     } finally {
       setPublishing(false);
     }
   };
-
-  // Count FAQs per bucket (from current filtered set without bucket filter)
-  const bucketCounts = buckets.map((b) => ({
-    ...b,
-    count: faqs.filter((f) => f.bucket_id === b.id).length,
-  }));
 
   const draftCount = faqs.filter((f) => f.status === 'draft').length;
 
@@ -171,9 +176,9 @@ export function FAQList({ onStatsChange }: FAQListProps) {
               border: `1px solid ${!selectedBucket ? 'var(--border-accent)' : 'var(--border)'}`,
             }}
           >
-            All ({faqs.length})
+            All ({totalCount})
           </button>
-          {bucketCounts.map((bucket) => {
+          {buckets.map((bucket) => {
             const isActive = selectedBucket === bucket.id;
             const color = CATEGORY_COLORS[bucket.name] || 'var(--accent)';
             return (
@@ -187,7 +192,7 @@ export function FAQList({ onStatsChange }: FAQListProps) {
                   border: `1px solid ${isActive ? `color-mix(in srgb, ${color} 30%, transparent)` : 'var(--border)'}`,
                 }}
               >
-                {bucket.name} {bucket.count > 0 && `(${bucket.count})`}
+                {bucket.name} {bucket.faq_count > 0 && `(${bucket.faq_count})`}
               </button>
             );
           })}
