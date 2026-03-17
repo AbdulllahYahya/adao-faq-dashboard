@@ -1,8 +1,10 @@
 import OpenAI from 'openai';
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+function getOpenAIClient() {
+  const apiKey = process.env.OPENAI_API_KEY;
+  if (!apiKey) throw new Error('OPENAI_API_KEY is not configured');
+  return new OpenAI({ apiKey });
+}
 
 const ADAO_SYSTEM_PROMPT = `You are an AI assistant working for ADAO (Asbestos Disease Awareness Organization). Your mission is to support ADAO's work in raising awareness about asbestos-related diseases, advocating for victims, and promoting prevention through education and policy change.
 
@@ -66,6 +68,7 @@ export async function generateFAQs(content: string, link?: string): Promise<{
     ? `The following content is from: ${link}\n\nPlease generate FAQs from this content:\n\n${content}`
     : `Please generate FAQs from this content:\n\n${content}`;
 
+  const openai = getOpenAIClient();
   const response = await openai.chat.completions.create({
     model: 'gpt-4o',
     messages: [
