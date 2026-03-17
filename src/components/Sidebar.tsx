@@ -63,7 +63,8 @@ export function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose }: Side
                 className="flex-shrink-0 hover:opacity-80 transition-opacity"
               >
                 <Image
-                  src="/images/adao-logo.jpg"
+                  src="https://www.asbestosdiseaseawareness.org/wp-content/uploads/2015/12/adao-logo200x75.jpg.webp"
+                  unoptimized
                   alt="ADAO"
                   width={40}
                   height={40}

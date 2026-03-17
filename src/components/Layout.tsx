@@ -71,7 +71,8 @@ export function Layout({ children }: LayoutProps) {
             className="hover:opacity-80 transition-opacity"
           >
             <Image
-              src="/images/adao-logo.jpg"
+              src="https://www.asbestosdiseaseawareness.org/wp-content/uploads/2015/12/adao-logo200x75.jpg.webp"
+                unoptimized
               alt="ADAO"
               width={34}
               height={34}
