@@ -55,8 +55,8 @@ async function fetchTranscriptRapidAPI(videoId: string): Promise<TranscriptSegme
 
   return data.transcript.map((t: any) => ({
     text: t.text,
-    offset: t.offset * 1000, // RapidAPI returns seconds, normalize to ms
-    duration: t.duration * 1000,
+    offset: parseFloat(t.offset) * 1000, // RapidAPI returns seconds as strings, normalize to ms
+    duration: parseFloat(t.duration) * 1000,
   }));
 }
 
